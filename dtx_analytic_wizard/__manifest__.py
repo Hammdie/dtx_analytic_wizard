@@ -1,8 +1,8 @@
 {
     'name': 'Analytic Distribution Wizard',
-    'version': '18.0.1.0.0',
+    'version': '18.0.2.0.0',
     'category': 'Accounting',
-    'summary': 'Assign analytic accounts to all order/invoice lines via wizard',
+    'summary': 'Assign or remove analytic accounts on all order/invoice lines via wizard',
     'author': 'Detalex GmbH',
     'website': 'https://detalex.de',
     'depends': [

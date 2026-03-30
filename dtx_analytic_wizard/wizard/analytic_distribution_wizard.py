@@ -3,10 +3,10 @@ from odoo import fields, models
 
 class AnalyticDistributionWizard(models.TransientModel):
     _name = 'analytic.distribution.wizard'
-    _description = 'Kostenstellen-Zuweisung Wizard'
+    _description = 'Assign Analytic Distribution Wizard'
 
     analytic_distribution = fields.Json(
-        string='Kostenstellen',
+        string='Analytic Distribution',
     )
     analytic_precision = fields.Integer(
         store=False,
@@ -14,11 +14,11 @@ class AnalyticDistributionWizard(models.TransientModel):
     )
     purchase_order_ids = fields.Many2many(
         'purchase.order',
-        string='Bestellungen',
+        string='Purchase Orders',
     )
     account_move_ids = fields.Many2many(
         'account.move',
-        string='Rechnungen',
+        string='Invoices',
     )
 
     def action_apply(self):
