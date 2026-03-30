@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_analytic_distribution_purchase_order" model="ir.actions.server">
+        <field name="name">Kostenstellen zuweisen</field>
+        <field name="model_id" ref="purchase.model_purchase_order"/>
+        <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'Kostenstellen zuweisen',
+    'res_model': 'analytic.distribution.wizard',
+    'view_mode': 'form',
+    'target': 'new',
+    'context': {'default_purchase_order_ids': records.ids},
+}
+        </field>
+        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="action_analytic_distribution_account_move" model="ir.actions.server">
+        <field name="name">Kostenstellen zuweisen</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'Kostenstellen zuweisen',
+    'res_model': 'analytic.distribution.wizard',
+    'view_mode': 'form',
+    'target': 'new',
+    'context': {'default_account_move_ids': records.ids},
+}
+        </field>
+        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+</odoo>
