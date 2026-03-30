@@ -8,6 +8,10 @@ class AnalyticDistributionWizard(models.TransientModel):
     analytic_distribution = fields.Json(
         string='Kostenstellen',
     )
+    analytic_precision = fields.Integer(
+        store=False,
+        default=lambda self: self.env['decimal.precision'].precision_get("Percentage Analytic"),
+    )
     purchase_order_ids = fields.Many2many(
         'purchase.order',
         string='Bestellungen',
