@@ -8,6 +8,8 @@
         <field name="binding_view_types">list,form</field>
         <field name="state">code</field>
         <field name="code">
+if any(r.state != 'draft' for r in records):
+    raise UserError("Analytic distribution can only be changed on draft purchase orders.")
 action = {
     'type': 'ir.actions.act_window',
     'name': 'Assign Analytic Accounts',
@@ -27,6 +29,8 @@ action = {
         <field name="binding_view_types">list,form</field>
         <field name="state">code</field>
         <field name="code">
+if any(r.state != 'draft' for r in records):
+    raise UserError("Analytic distribution can only be changed on draft invoices.")
 action = {
     'type': 'ir.actions.act_window',
     'name': 'Assign Analytic Accounts',
@@ -47,6 +51,8 @@ action = {
         <field name="binding_view_types">list,form</field>
         <field name="state">code</field>
         <field name="code">
+if any(r.state != 'draft' for r in records):
+    raise UserError("Analytic distribution can only be changed on draft purchase orders.")
 action = {
     'type': 'ir.actions.act_window',
     'name': 'Remove Analytic Accounts',
@@ -66,6 +72,8 @@ action = {
         <field name="binding_view_types">list,form</field>
         <field name="state">code</field>
         <field name="code">
+if any(r.state != 'draft' for r in records):
+    raise UserError("Analytic distribution can only be changed on draft invoices.")
 action = {
     'type': 'ir.actions.act_window',
     'name': 'Remove Analytic Accounts',

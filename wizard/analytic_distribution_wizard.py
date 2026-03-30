@@ -1,10 +1,15 @@
-from odoo import fields, models
+from odoo import _, fields, models
+from odoo.exceptions import UserError
 
 
 class AnalyticDistributionWizard(models.TransientModel):
     _name = 'analytic.distribution.wizard'
     _description = 'Assign Analytic Distribution Wizard'
 
+    company_id = fields.Many2one(
+        'res.company',
+        default=lambda self: self.env.company,
+    )
     analytic_distribution = fields.Json(
         string='Analytic Distribution',
     )
@@ -21,7 +26,24 @@ class AnalyticDistributionWizard(models.TransientModel):
         string='Invoices',
     )
 
+    def _check_draft_state(self):
+        confirmed_orders = self.purchase_order_ids.filtered(lambda o: o.state != 'draft')
+        if confirmed_orders:
+            raise UserError(_(
+                "Analytic distribution can only be changed on draft purchase orders. "
+                "The following orders are already confirmed: %s",
+                ', '.join(confirmed_orders.mapped('name')),
+            ))
+        confirmed_moves = self.account_move_ids.filtered(lambda m: m.state != 'draft')
+        if confirmed_moves:
+            raise UserError(_(
+                "Analytic distribution can only be changed on draft invoices. "
+                "The following invoices are already confirmed: %s",
+                ', '.join(confirmed_moves.mapped('name')),
+            ))
+
     def action_apply(self):
+        self._check_draft_state()
         new_distribution = self.analytic_distribution or {}
         if not new_distribution:
             return {'type': 'ir.actions.act_window_close'}
