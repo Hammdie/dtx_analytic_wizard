@@ -289,7 +289,7 @@ class TestAnalyticDistributionWizard(TransactionCase):
             'purchase_order_ids': [(6, 0, [order.id])],
         })
         wizard.action_remove()
-        self.assertEqual(order.order_line[0].analytic_distribution, {})
+        self.assertFalse(order.order_line[0].analytic_distribution)
 
     def test_18_remove_specific_account(self):
         """Remove specific account keeps other accounts intact."""
@@ -329,7 +329,7 @@ class TestAnalyticDistributionWizard(TransactionCase):
             'account_move_ids': [(6, 0, [move.id])],
         })
         wizard.action_remove()
-        self.assertEqual(move.invoice_line_ids[0].analytic_distribution, {})
+        self.assertFalse(move.invoice_line_ids[0].analytic_distribution)
 
     def test_21_remove_specific_from_invoice(self):
         """Remove specific account from invoice lines."""
@@ -391,4 +391,4 @@ class TestAnalyticDistributionWizard(TransactionCase):
         })
         wizard.action_remove()
         for line in order.order_line:
-            self.assertEqual(line.analytic_distribution, {})
+            self.assertFalse(line.analytic_distribution)

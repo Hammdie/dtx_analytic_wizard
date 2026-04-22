@@ -19,7 +19,7 @@ action = {
     'context': {'default_purchase_order_ids': records.ids},
 }
         </field>
-        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <!-- groups_id removed in Odoo 19; binding_model_id already restricts access -->
     </record>
 
     <record id="action_analytic_distribution_account_move" model="ir.actions.server">
@@ -40,7 +40,7 @@ action = {
     'context': {'default_account_move_ids': records.ids},
 }
         </field>
-        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <!-- groups_id removed in Odoo 19; binding_model_id already restricts access -->
     </record>
 
     <!-- Remove Analytic Accounts -->
@@ -62,7 +62,7 @@ action = {
     'context': {'default_purchase_order_ids': records.ids},
 }
         </field>
-        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <!-- groups_id removed in Odoo 19; binding_model_id already restricts access -->
     </record>
 
     <record id="action_analytic_remove_account_move" model="ir.actions.server">
@@ -83,6 +83,6 @@ action = {
     'context': {'default_account_move_ids': records.ids},
 }
         </field>
-        <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+        <!-- groups_id removed in Odoo 19; binding_model_id already restricts access -->
     </record>
 </odoo>

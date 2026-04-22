@@ -7,7 +7,7 @@ class TestAnalyticWizardTour(HttpCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.env.ref('base.user_admin').groups_id += cls.env.ref(
+        cls.env.ref('base.user_admin').group_ids += cls.env.ref(
             'analytic.group_analytic_accounting',
         )
         plan = cls.env['account.analytic.plan'].create({'name': 'Tour Plan'})
