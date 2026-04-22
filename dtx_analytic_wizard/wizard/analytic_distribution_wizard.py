@@ -10,9 +10,7 @@ class AnalyticDistributionWizard(models.TransientModel):
         'res.company',
         default=lambda self: self.env.company,
     )
-    analytic_distribution = fields.Json(
-        string='Analytic Distribution',
-    )
+    analytic_distribution = fields.Json()
     analytic_precision = fields.Integer(
         store=False,
         default=lambda self: self.env['decimal.precision'].precision_get("Percentage Analytic"),

@@ -381,8 +381,10 @@ class TestAnalyticDistributionWizard(TransactionCase):
         order = self.env['purchase.order'].create({
             'partner_id': self.partner.id,
             'order_line': [
-                (0, 0, {'product_id': self.product.id, 'name': 'Line 1', 'product_qty': 1, 'price_unit': 100, 'analytic_distribution': dist}),
-                (0, 0, {'product_id': self.product.id, 'name': 'Line 2', 'product_qty': 2, 'price_unit': 200, 'analytic_distribution': dist}),
+                (0, 0, {'product_id': self.product.id, 'name': 'Line 1',
+                 'product_qty': 1, 'price_unit': 100, 'analytic_distribution': dist}),
+                (0, 0, {'product_id': self.product.id, 'name': 'Line 2',
+                 'product_qty': 2, 'price_unit': 200, 'analytic_distribution': dist}),
             ],
         })
         wizard = self.env['analytic.distribution.remove.wizard'].create({
