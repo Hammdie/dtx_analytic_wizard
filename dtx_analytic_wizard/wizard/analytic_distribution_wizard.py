@@ -1,4 +1,4 @@
-from odoo import _, fields, models
+from odoo import fields, models
 from odoo.exceptions import UserError
 
 
@@ -29,17 +29,17 @@ class AnalyticDistributionWizard(models.TransientModel):
     def _check_draft_state(self):
         confirmed_orders = self.purchase_order_ids.filtered(lambda o: o.state != 'draft')
         if confirmed_orders:
-            raise UserError(_(
+            raise UserError(self.env._(
                 "Analytic distribution can only be changed on draft purchase orders. "
-                "The following orders are already confirmed: %s",
-                ', '.join(confirmed_orders.mapped('name')),
+                "The following orders are already confirmed: %(names)s",
+                names=', '.join(confirmed_orders.mapped('name')),
             ))
         confirmed_moves = self.account_move_ids.filtered(lambda m: m.state != 'draft')
         if confirmed_moves:
-            raise UserError(_(
+            raise UserError(self.env._(
                 "Analytic distribution can only be changed on draft invoices. "
-                "The following invoices are already confirmed: %s",
-                ', '.join(confirmed_moves.mapped('name')),
+                "The following invoices are already confirmed: %(names)s",
+                names=', '.join(confirmed_moves.mapped('name')),
             ))
 
     def action_apply(self):

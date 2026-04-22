@@ -1,6 +1,6 @@
 {
     'name': 'Analytic Distribution Wizard',
-    'version': '18.0.3.1.0',
+    'version': '19.0.1.0.0',
     'category': 'Accounting',
     'summary': 'Bulk assign or remove analytic accounts on purchase order and invoice lines via wizard',
     'description': """

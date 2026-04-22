@@ -1,11 +1,10 @@
 from odoo import fields
-from odoo.addons.dtx_test_base.tests.common import DtxTestCase
 from odoo.exceptions import UserError
-from odoo.tests import tagged
+from odoo.tests import TransactionCase, tagged
 
 
-@tagged('post_install', '-at_install')
-class TestAnalyticDistributionWizard(DtxTestCase):
+@tagged('post_install', '-at_install', 'dtx_analytic_wizard')
+class TestAnalyticDistributionWizard(TransactionCase):
 
     @classmethod
     def setUpClass(cls):
@@ -32,7 +31,6 @@ class TestAnalyticDistributionWizard(DtxTestCase):
             'name': 'Test Product',
             'type': 'consu',
         })
-        # Ensure purchase journal exists (Pipeline may not have Chart of Accounts)
         cls.purchase_journal = cls.env['account.journal'].search([
             ('type', '=', 'purchase'),
         ], limit=1)
@@ -42,7 +40,6 @@ class TestAnalyticDistributionWizard(DtxTestCase):
                 'type': 'purchase',
                 'code': 'TPUR',
             })
-        # Ensure expense account exists
         cls.expense_account = cls.env['account.account'].search([
             ('account_type', '=', 'expense'),
         ], limit=1)
@@ -52,7 +49,6 @@ class TestAnalyticDistributionWizard(DtxTestCase):
                 'code': '600000',
                 'account_type': 'expense',
             })
-        # Ensure payable account exists (needed for payment_term lines on invoices)
         payable_account = cls.env['account.account'].search([
             ('account_type', '=', 'liability_payable'),
         ], limit=1)
@@ -66,7 +62,7 @@ class TestAnalyticDistributionWizard(DtxTestCase):
         cls.partner.property_account_payable_id = payable_account
 
     def _create_purchase_order(self, analytic_distribution=None):
-        order = self.env['purchase.order'].create({
+        return self.env['purchase.order'].create({
             'partner_id': self.partner.id,
             'order_line': [(0, 0, {
                 'product_id': self.product.id,
@@ -76,63 +72,70 @@ class TestAnalyticDistributionWizard(DtxTestCase):
                 'analytic_distribution': analytic_distribution,
             })],
         })
-        return order
+
+    def _create_invoice(self, analytic_distribution=None):
+        return self.env['account.move'].create({
+            'move_type': 'in_invoice',
+            'journal_id': self.purchase_journal.id,
+            'partner_id': self.partner.id,
+            'invoice_date': fields.Date.today(),
+            'invoice_line_ids': [(0, 0, {
+                'product_id': self.product.id,
+                'name': 'Test Invoice Line',
+                'quantity': 1.0,
+                'price_unit': 200.0,
+                'account_id': self.expense_account.id,
+                'analytic_distribution': analytic_distribution,
+            })],
+        })
+
+    # ------------------------------------------------------------------
+    # Assign Wizard
+    # ------------------------------------------------------------------
 
     def test_01_apply_to_purchase_order_empty_lines(self):
-        """Wizard weist Kostenstellen auf leere Positionen zu."""
+        """Assign analytic accounts to empty PO line."""
         order = self._create_purchase_order()
         wizard = self.env['analytic.distribution.wizard'].create({
-            'analytic_distribution': {
-                str(self.analytic_account_1.id): 100,
-            },
+            'analytic_distribution': {str(self.analytic_account_1.id): 100},
             'purchase_order_ids': [(6, 0, [order.id])],
         })
         wizard.action_apply()
-        line = order.order_line[0]
         self.assertEqual(
-            line.analytic_distribution,
+            order.order_line[0].analytic_distribution,
             {str(self.analytic_account_1.id): 100},
         )
 
     def test_02_merge_with_existing_distribution(self):
-        """Bestehende Kostenstellen bleiben erhalten, neue werden ergänzt."""
+        """Existing accounts are preserved, new ones are added."""
         existing = {str(self.analytic_account_1.id): 50}
         order = self._create_purchase_order(analytic_distribution=existing)
         wizard = self.env['analytic.distribution.wizard'].create({
-            'analytic_distribution': {
-                str(self.analytic_account_2.id): 50,
-            },
+            'analytic_distribution': {str(self.analytic_account_2.id): 50},
             'purchase_order_ids': [(6, 0, [order.id])],
         })
         wizard.action_apply()
-        line = order.order_line[0]
-        self.assertIn(str(self.analytic_account_1.id), line.analytic_distribution)
-        self.assertIn(str(self.analytic_account_2.id), line.analytic_distribution)
-        self.assertEqual(line.analytic_distribution[str(self.analytic_account_1.id)], 50)
-        self.assertEqual(line.analytic_distribution[str(self.analytic_account_2.id)], 50)
+        dist = order.order_line[0].analytic_distribution
+        self.assertEqual(dist[str(self.analytic_account_1.id)], 50)
+        self.assertEqual(dist[str(self.analytic_account_2.id)], 50)
 
     def test_03_duplicate_key_overwritten_by_wizard(self):
-        """Bei gleichem Key wird der Prozentsatz aus dem Wizard übernommen."""
+        """Same account ID: wizard percentage overwrites existing."""
         existing = {str(self.analytic_account_1.id): 30}
         order = self._create_purchase_order(analytic_distribution=existing)
         wizard = self.env['analytic.distribution.wizard'].create({
-            'analytic_distribution': {
-                str(self.analytic_account_1.id): 70,
-            },
+            'analytic_distribution': {str(self.analytic_account_1.id): 70},
             'purchase_order_ids': [(6, 0, [order.id])],
         })
         wizard.action_apply()
-        line = order.order_line[0]
-        self.assertEqual(line.analytic_distribution[str(self.analytic_account_1.id)], 70)
+        self.assertEqual(order.order_line[0].analytic_distribution[str(self.analytic_account_1.id)], 70)
 
     def test_04_apply_to_multiple_orders(self):
-        """Wizard wendet Kostenstellen auf mehrere Bestellungen an."""
+        """Wizard applies to multiple POs at once."""
         order1 = self._create_purchase_order()
         order2 = self._create_purchase_order()
         wizard = self.env['analytic.distribution.wizard'].create({
-            'analytic_distribution': {
-                str(self.analytic_account_1.id): 100,
-            },
+            'analytic_distribution': {str(self.analytic_account_1.id): 100},
             'purchase_order_ids': [(6, 0, [order1.id, order2.id])],
         })
         wizard.action_apply()
@@ -143,7 +146,7 @@ class TestAnalyticDistributionWizard(DtxTestCase):
             )
 
     def test_05_empty_wizard_does_nothing(self):
-        """Leere Wizard-Auswahl ändert nichts."""
+        """Empty distribution returns early without changes."""
         existing = {str(self.analytic_account_1.id): 100}
         order = self._create_purchase_order(analytic_distribution=existing)
         wizard = self.env['analytic.distribution.wizard'].create({
@@ -152,72 +155,37 @@ class TestAnalyticDistributionWizard(DtxTestCase):
         })
         result = wizard.action_apply()
         self.assertEqual(result, {'type': 'ir.actions.act_window_close'})
-        self.assertEqual(
-            order.order_line[0].analytic_distribution,
-            existing,
-        )
+        self.assertEqual(order.order_line[0].analytic_distribution, existing)
 
     def test_06_apply_to_account_move(self):
-        """Wizard weist Kostenstellen auf Rechnungspositionen zu."""
-        move = self.env['account.move'].create({
-            'move_type': 'in_invoice',
-            'journal_id': self.purchase_journal.id,
-            'partner_id': self.partner.id,
-            'invoice_date': fields.Date.today(),
-            'invoice_line_ids': [(0, 0, {
-                'product_id': self.product.id,
-                'name': 'Test Invoice Line',
-                'quantity': 1.0,
-                'price_unit': 200.0,
-                'account_id': self.expense_account.id,
-            })],
-        })
+        """Assign analytic accounts to invoice lines."""
+        move = self._create_invoice()
         wizard = self.env['analytic.distribution.wizard'].create({
-            'analytic_distribution': {
-                str(self.analytic_account_2.id): 100,
-            },
+            'analytic_distribution': {str(self.analytic_account_2.id): 100},
             'account_move_ids': [(6, 0, [move.id])],
         })
         wizard.action_apply()
-        inv_line = move.invoice_line_ids[0]
         self.assertEqual(
-            inv_line.analytic_distribution,
+            move.invoice_line_ids[0].analytic_distribution,
             {str(self.analytic_account_2.id): 100},
         )
 
     def test_07_merge_account_move_existing(self):
-        """Merge auf Rechnungspositionen mit bestehender Verteilung."""
-        move = self.env['account.move'].create({
-            'move_type': 'in_invoice',
-            'journal_id': self.purchase_journal.id,
-            'partner_id': self.partner.id,
-            'invoice_date': fields.Date.today(),
-            'invoice_line_ids': [(0, 0, {
-                'product_id': self.product.id,
-                'name': 'Test Invoice Line',
-                'quantity': 1.0,
-                'price_unit': 200.0,
-                'account_id': self.expense_account.id,
-                'analytic_distribution': {
-                    str(self.analytic_account_1.id): 60,
-                },
-            })],
-        })
+        """Merge new accounts with existing invoice distribution."""
+        move = self._create_invoice(
+            analytic_distribution={str(self.analytic_account_1.id): 60},
+        )
         wizard = self.env['analytic.distribution.wizard'].create({
-            'analytic_distribution': {
-                str(self.analytic_account_3.id): 40,
-            },
+            'analytic_distribution': {str(self.analytic_account_3.id): 40},
             'account_move_ids': [(6, 0, [move.id])],
         })
         wizard.action_apply()
-        inv_line = move.invoice_line_ids[0]
-        self.assertIn(str(self.analytic_account_1.id), inv_line.analytic_distribution)
-        self.assertIn(str(self.analytic_account_3.id), inv_line.analytic_distribution)
-        self.assertEqual(inv_line.analytic_distribution[str(self.analytic_account_1.id)], 60)
-        self.assertEqual(inv_line.analytic_distribution[str(self.analytic_account_3.id)], 40)
+        dist = move.invoice_line_ids[0].analytic_distribution
+        self.assertEqual(dist[str(self.analytic_account_1.id)], 60)
+        self.assertEqual(dist[str(self.analytic_account_3.id)], 40)
 
     def test_08_multiple_analytic_accounts_in_wizard(self):
-        """Wizard mit mehreren Kostenstellen gleichzeitig."""
+        """Wizard with multiple accounts at once."""
         order = self._create_purchase_order()
         wizard = self.env['analytic.distribution.wizard'].create({
             'analytic_distribution': {
@@ -227,59 +195,56 @@ class TestAnalyticDistributionWizard(DtxTestCase):
             'purchase_order_ids': [(6, 0, [order.id])],
         })
         wizard.action_apply()
-        line = order.order_line[0]
-        self.assertEqual(line.analytic_distribution[str(self.analytic_account_1.id)], 60)
-        self.assertEqual(line.analytic_distribution[str(self.analytic_account_2.id)], 40)
+        dist = order.order_line[0].analytic_distribution
+        self.assertEqual(dist[str(self.analytic_account_1.id)], 60)
+        self.assertEqual(dist[str(self.analytic_account_2.id)], 40)
+
+    # ------------------------------------------------------------------
+    # Wizard field validation
+    # ------------------------------------------------------------------
 
     def test_09_wizard_has_company_id_field(self):
-        """Wizard muss company_id haben, da das analytic_distribution Widget es erwartet."""
-        self.assertIn(
-            'company_id',
-            self.env['analytic.distribution.wizard']._fields,
-            "analytic.distribution.wizard needs company_id for the analytic_distribution widget",
-        )
+        """Wizard must have company_id for the analytic_distribution widget."""
+        self.assertIn('company_id', self.env['analytic.distribution.wizard']._fields)
 
-    def test_10_wizard_onchange_does_not_raise(self):
-        """Prüft dass alle Felder des Wizards gelesen werden können ohne Fehler."""
+    def test_10_wizard_fields_readable(self):
+        """All wizard fields can be read without errors."""
         wizard = self.env['analytic.distribution.wizard'].create({
             'purchase_order_ids': [(6, 0, [])],
         })
-        # Read all fields to simulate what the UI does when opening the wizard.
-        # This catches missing fields like company_id or analytic_precision.
         wizard.read(list(wizard._fields.keys()))
 
     def test_11_remove_wizard_has_company_id_field(self):
-        """Remove-Wizard muss company_id haben."""
-        self.assertIn(
-            'company_id',
-            self.env['analytic.distribution.remove.wizard']._fields,
-            "analytic.distribution.remove.wizard needs company_id for the analytic_distribution widget",
-        )
+        """Remove wizard must have company_id."""
+        self.assertIn('company_id', self.env['analytic.distribution.remove.wizard']._fields)
 
-    def test_12_remove_wizard_onchange_does_not_raise(self):
-        """Prüft dass alle Felder des Remove-Wizards gelesen werden können ohne Fehler."""
+    def test_12_remove_wizard_fields_readable(self):
+        """All remove wizard fields can be read without errors."""
         wizard = self.env['analytic.distribution.remove.wizard'].create({
             'purchase_order_ids': [(6, 0, [])],
         })
         wizard.read(list(wizard._fields.keys()))
 
+    # ------------------------------------------------------------------
+    # Draft state enforcement
+    # ------------------------------------------------------------------
+
     def test_13_assign_blocked_on_confirmed_purchase_order(self):
-        """Assign-Wizard darf bei bestätigter Bestellung nicht angewendet werden."""
+        """Assign wizard raises UserError on confirmed PO."""
         order = self._create_purchase_order()
         order.button_confirm()
         wizard = self.env['analytic.distribution.wizard'].create({
-            'analytic_distribution': {
-                str(self.analytic_account_1.id): 100,
-            },
+            'analytic_distribution': {str(self.analytic_account_1.id): 100},
             'purchase_order_ids': [(6, 0, [order.id])],
         })
         with self.assertRaises(UserError):
             wizard.action_apply()
 
     def test_14_remove_blocked_on_confirmed_purchase_order(self):
-        """Remove-Wizard darf bei bestätigter Bestellung nicht angewendet werden."""
-        existing = {str(self.analytic_account_1.id): 100}
-        order = self._create_purchase_order(analytic_distribution=existing)
+        """Remove wizard raises UserError on confirmed PO."""
+        order = self._create_purchase_order(
+            analytic_distribution={str(self.analytic_account_1.id): 100},
+        )
         order.button_confirm()
         wizard = self.env['analytic.distribution.remove.wizard'].create({
             'remove_all': True,
@@ -289,45 +254,19 @@ class TestAnalyticDistributionWizard(DtxTestCase):
             wizard.action_remove()
 
     def test_15_assign_blocked_on_posted_invoice(self):
-        """Assign-Wizard darf bei bestätigter Rechnung nicht angewendet werden."""
-        move = self.env['account.move'].create({
-            'move_type': 'in_invoice',
-            'journal_id': self.purchase_journal.id,
-            'partner_id': self.partner.id,
-            'invoice_date': fields.Date.today(),
-            'invoice_line_ids': [(0, 0, {
-                'product_id': self.product.id,
-                'name': 'Test Invoice Line',
-                'quantity': 1.0,
-                'price_unit': 200.0,
-                'account_id': self.expense_account.id,
-            })],
-        })
+        """Assign wizard raises UserError on posted invoice."""
+        move = self._create_invoice()
         move.action_post()
         wizard = self.env['analytic.distribution.wizard'].create({
-            'analytic_distribution': {
-                str(self.analytic_account_1.id): 100,
-            },
+            'analytic_distribution': {str(self.analytic_account_1.id): 100},
             'account_move_ids': [(6, 0, [move.id])],
         })
         with self.assertRaises(UserError):
             wizard.action_apply()
 
     def test_16_remove_blocked_on_posted_invoice(self):
-        """Remove-Wizard darf bei bestätigter Rechnung nicht angewendet werden."""
-        move = self.env['account.move'].create({
-            'move_type': 'in_invoice',
-            'journal_id': self.purchase_journal.id,
-            'partner_id': self.partner.id,
-            'invoice_date': fields.Date.today(),
-            'invoice_line_ids': [(0, 0, {
-                'product_id': self.product.id,
-                'name': 'Test Invoice Line',
-                'quantity': 1.0,
-                'price_unit': 200.0,
-                'account_id': self.expense_account.id,
-            })],
-        })
+        """Remove wizard raises UserError on posted invoice."""
+        move = self._create_invoice()
         move.action_post()
         wizard = self.env['analytic.distribution.remove.wizard'].create({
             'remove_all': True,
@@ -335,3 +274,121 @@ class TestAnalyticDistributionWizard(DtxTestCase):
         })
         with self.assertRaises(UserError):
             wizard.action_remove()
+
+    # ------------------------------------------------------------------
+    # Remove wizard
+    # ------------------------------------------------------------------
+
+    def test_17_remove_all_from_purchase_order(self):
+        """Remove all clears analytic distribution on PO lines."""
+        order = self._create_purchase_order(
+            analytic_distribution={str(self.analytic_account_1.id): 100},
+        )
+        wizard = self.env['analytic.distribution.remove.wizard'].create({
+            'remove_all': True,
+            'purchase_order_ids': [(6, 0, [order.id])],
+        })
+        wizard.action_remove()
+        self.assertEqual(order.order_line[0].analytic_distribution, {})
+
+    def test_18_remove_specific_account(self):
+        """Remove specific account keeps other accounts intact."""
+        dist = {
+            str(self.analytic_account_1.id): 60,
+            str(self.analytic_account_2.id): 40,
+        }
+        order = self._create_purchase_order(analytic_distribution=dist)
+        wizard = self.env['analytic.distribution.remove.wizard'].create({
+            'analytic_distribution': {str(self.analytic_account_1.id): 100},
+            'purchase_order_ids': [(6, 0, [order.id])],
+        })
+        wizard.action_remove()
+        result = order.order_line[0].analytic_distribution
+        self.assertNotIn(str(self.analytic_account_1.id), result)
+        self.assertEqual(result[str(self.analytic_account_2.id)], 40)
+
+    def test_19_remove_empty_does_nothing(self):
+        """Remove with empty selection returns early."""
+        existing = {str(self.analytic_account_1.id): 100}
+        order = self._create_purchase_order(analytic_distribution=existing)
+        wizard = self.env['analytic.distribution.remove.wizard'].create({
+            'analytic_distribution': {},
+            'purchase_order_ids': [(6, 0, [order.id])],
+        })
+        result = wizard.action_remove()
+        self.assertEqual(result, {'type': 'ir.actions.act_window_close'})
+        self.assertEqual(order.order_line[0].analytic_distribution, existing)
+
+    def test_20_remove_all_from_invoice(self):
+        """Remove all clears analytic distribution on invoice lines."""
+        move = self._create_invoice(
+            analytic_distribution={str(self.analytic_account_1.id): 100},
+        )
+        wizard = self.env['analytic.distribution.remove.wizard'].create({
+            'remove_all': True,
+            'account_move_ids': [(6, 0, [move.id])],
+        })
+        wizard.action_remove()
+        self.assertEqual(move.invoice_line_ids[0].analytic_distribution, {})
+
+    def test_21_remove_specific_from_invoice(self):
+        """Remove specific account from invoice lines."""
+        dist = {
+            str(self.analytic_account_1.id): 50,
+            str(self.analytic_account_2.id): 50,
+        }
+        move = self._create_invoice(analytic_distribution=dist)
+        wizard = self.env['analytic.distribution.remove.wizard'].create({
+            'analytic_distribution': {str(self.analytic_account_2.id): 100},
+            'account_move_ids': [(6, 0, [move.id])],
+        })
+        wizard.action_remove()
+        result = move.invoice_line_ids[0].analytic_distribution
+        self.assertIn(str(self.analytic_account_1.id), result)
+        self.assertNotIn(str(self.analytic_account_2.id), result)
+
+    def test_22_remove_nonexistent_key(self):
+        """Removing a key that doesn't exist does not raise."""
+        existing = {str(self.analytic_account_1.id): 100}
+        order = self._create_purchase_order(analytic_distribution=existing)
+        wizard = self.env['analytic.distribution.remove.wizard'].create({
+            'analytic_distribution': {str(self.analytic_account_3.id): 100},
+            'purchase_order_ids': [(6, 0, [order.id])],
+        })
+        wizard.action_remove()
+        self.assertEqual(order.order_line[0].analytic_distribution, existing)
+
+    def test_23_assign_to_multiple_lines(self):
+        """Wizard assigns to all lines of a PO with multiple lines."""
+        order = self.env['purchase.order'].create({
+            'partner_id': self.partner.id,
+            'order_line': [
+                (0, 0, {'product_id': self.product.id, 'name': 'Line 1', 'product_qty': 1, 'price_unit': 100}),
+                (0, 0, {'product_id': self.product.id, 'name': 'Line 2', 'product_qty': 2, 'price_unit': 200}),
+            ],
+        })
+        wizard = self.env['analytic.distribution.wizard'].create({
+            'analytic_distribution': {str(self.analytic_account_1.id): 100},
+            'purchase_order_ids': [(6, 0, [order.id])],
+        })
+        wizard.action_apply()
+        for line in order.order_line:
+            self.assertEqual(line.analytic_distribution, {str(self.analytic_account_1.id): 100})
+
+    def test_24_remove_all_from_multiple_lines(self):
+        """Remove all clears all lines of a multi-line PO."""
+        dist = {str(self.analytic_account_1.id): 100}
+        order = self.env['purchase.order'].create({
+            'partner_id': self.partner.id,
+            'order_line': [
+                (0, 0, {'product_id': self.product.id, 'name': 'Line 1', 'product_qty': 1, 'price_unit': 100, 'analytic_distribution': dist}),
+                (0, 0, {'product_id': self.product.id, 'name': 'Line 2', 'product_qty': 2, 'price_unit': 200, 'analytic_distribution': dist}),
+            ],
+        })
+        wizard = self.env['analytic.distribution.remove.wizard'].create({
+            'remove_all': True,
+            'purchase_order_ids': [(6, 0, [order.id])],
+        })
+        wizard.action_remove()
+        for line in order.order_line:
+            self.assertEqual(line.analytic_distribution, {})
