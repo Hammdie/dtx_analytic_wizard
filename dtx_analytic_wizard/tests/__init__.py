@@ -1,0 +1,2 @@
+from . import test_analytic_distribution_wizard
+from . import test_analytic_wizard_tour
