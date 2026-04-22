@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="analytic_distribution_wizard_form" model="ir.ui.view">
+        <field name="name">analytic.distribution.wizard.form</field>
+        <field name="model">analytic.distribution.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Assign Analytic Accounts">
+                <group>
+                    <field name="analytic_distribution" widget="analytic_distribution"/>
+                    <field name="analytic_precision" invisible="1"/>
+                    <field name="purchase_order_ids" invisible="1"/>
+                    <field name="account_move_ids" invisible="1"/>
+                </group>
+                <footer>
+                    <button name="action_apply" type="object" string="Apply" class="btn-primary"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="analytic_distribution_remove_wizard_form" model="ir.ui.view">
+        <field name="name">analytic.distribution.remove.wizard.form</field>
+        <field name="model">analytic.distribution.remove.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Remove Analytic Accounts">
+                <group>
+                    <field name="remove_all"/>
+                    <field name="analytic_distribution" widget="analytic_distribution"
+                           invisible="remove_all"/>
+                    <field name="analytic_precision" invisible="1"/>
+                    <field name="purchase_order_ids" invisible="1"/>
+                    <field name="account_move_ids" invisible="1"/>
+                </group>
+                <footer>
+                    <button name="action_remove" type="object" string="Remove" class="btn-danger"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

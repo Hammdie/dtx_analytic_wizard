@@ -1,0 +1,93 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# * dtx_analytic_wizard
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-30 00:00+0000\n"
+"PO-Revision-Date: 2026-03-30 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: German\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: dtx_analytic_wizard
+#: model:ir.model,name:dtx_analytic_wizard.model_analytic_distribution_wizard
+msgid "Assign Analytic Distribution Wizard"
+msgstr "Kostenstellen zuweisen Wizard"
+
+#. module: dtx_analytic_wizard
+#: model:ir.model,name:dtx_analytic_wizard.model_analytic_distribution_remove_wizard
+msgid "Remove Analytic Distribution Wizard"
+msgstr "Kostenstellen entfernen Wizard"
+
+#. module: dtx_analytic_wizard
+#: model_terms:ir.ui.view,arch_db:dtx_analytic_wizard.analytic_distribution_wizard_form
+msgid "Assign Analytic Accounts"
+msgstr "Kostenstellen zuweisen"
+
+#. module: dtx_analytic_wizard
+#: model_terms:ir.ui.view,arch_db:dtx_analytic_wizard.analytic_distribution_remove_wizard_form
+msgid "Remove Analytic Accounts"
+msgstr "Kostenstellen entfernen"
+
+#. module: dtx_analytic_wizard
+#: model:ir.actions.server,name:dtx_analytic_wizard.action_analytic_distribution_purchase_order
+#: model:ir.actions.server,name:dtx_analytic_wizard.action_analytic_distribution_account_move
+msgid "Assign Analytic Accounts"
+msgstr "Kostenstellen zuweisen"
+
+#. module: dtx_analytic_wizard
+#: model:ir.actions.server,name:dtx_analytic_wizard.action_analytic_remove_purchase_order
+#: model:ir.actions.server,name:dtx_analytic_wizard.action_analytic_remove_account_move
+msgid "Remove Analytic Accounts"
+msgstr "Kostenstellen entfernen"
+
+#. module: dtx_analytic_wizard
+#: model:ir.model.fields,field_description:dtx_analytic_wizard.field_analytic_distribution_wizard__analytic_distribution
+#: model:ir.model.fields,field_description:dtx_analytic_wizard.field_analytic_distribution_remove_wizard__analytic_distribution
+msgid "Analytic Distribution"
+msgstr "Kostenstellenverteilung"
+
+#. module: dtx_analytic_wizard
+#: model:ir.model.fields,field_description:dtx_analytic_wizard.field_analytic_distribution_remove_wizard__analytic_distribution
+msgid "Analytic Accounts to Remove"
+msgstr "Zu entfernende Kostenstellen"
+
+#. module: dtx_analytic_wizard
+#: model:ir.model.fields,field_description:dtx_analytic_wizard.field_analytic_distribution_remove_wizard__remove_all
+msgid "Remove All Analytic Accounts"
+msgstr "Alle Kostenstellen entfernen"
+
+#. module: dtx_analytic_wizard
+#: model:ir.model.fields,field_description:dtx_analytic_wizard.field_analytic_distribution_wizard__purchase_order_ids
+#: model:ir.model.fields,field_description:dtx_analytic_wizard.field_analytic_distribution_remove_wizard__purchase_order_ids
+msgid "Purchase Orders"
+msgstr "Bestellungen"
+
+#. module: dtx_analytic_wizard
+#: model:ir.model.fields,field_description:dtx_analytic_wizard.field_analytic_distribution_wizard__account_move_ids
+#: model:ir.model.fields,field_description:dtx_analytic_wizard.field_analytic_distribution_remove_wizard__account_move_ids
+msgid "Invoices"
+msgstr "Rechnungen"
+
+#. module: dtx_analytic_wizard
+#: model_terms:ir.ui.view,arch_db:dtx_analytic_wizard.analytic_distribution_wizard_form
+msgid "Apply"
+msgstr "Anwenden"
+
+#. module: dtx_analytic_wizard
+#: model_terms:ir.ui.view,arch_db:dtx_analytic_wizard.analytic_distribution_wizard_form
+#: model_terms:ir.ui.view,arch_db:dtx_analytic_wizard.analytic_distribution_remove_wizard_form
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#. module: dtx_analytic_wizard
+#: model_terms:ir.ui.view,arch_db:dtx_analytic_wizard.analytic_distribution_remove_wizard_form
+msgid "Remove"
+msgstr "Entfernen"
